@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.datasets import make_classification, make_circles
+from sklearn.datasets import make_classification, make_circles, load_breast_cancer
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.feature_selection import SelectKBest, f_classif
 import seaborn as sns
 from matplotlib.colors import ListedColormap
 
@@ -18,7 +19,21 @@ class SVMClassifier:
     def load_and_prepare_data(self):
         print("Loading and preparing datasets...")
         
-        # Linear dataset
+        # Breast Cancer dataset (real-world data)
+        breast_cancer = load_breast_cancer()
+        X_breast_cancer = breast_cancer.data
+        y_breast_cancer = breast_cancer.target
+        
+        # Select only 2 most important features for 2D visualization
+        selector = SelectKBest(f_classif, k=2)
+        X_breast_cancer_2d = selector.fit_transform(X_breast_cancer, y_breast_cancer)
+        selected_features = selector.get_support(indices=True)
+        
+        print(f"Breast Cancer Dataset: {X_breast_cancer.shape[0]} samples, {X_breast_cancer.shape[1]} features")
+        print(f"Selected 2 best features for visualization: {[breast_cancer.feature_names[i] for i in selected_features]}")
+        print(f"Target classes: {breast_cancer.target_names} (0=malignant, 1=benign)")
+        
+        # Linear dataset (synthetic for comparison)
         X_linear, y_linear = make_classification(
             n_samples=200,
             n_features=2,
@@ -36,7 +51,7 @@ class SVMClassifier:
             random_state=42
         )
         
-        return (X_linear, y_linear), (X_nonlinear, y_nonlinear)
+        return (X_breast_cancer, y_breast_cancer), (X_breast_cancer_2d, y_breast_cancer), (X_linear, y_linear), (X_nonlinear, y_nonlinear)
     
     def train_svm_models(self, X, y):
         print("Training SVM models with linear and RBF kernels...")
@@ -235,10 +250,34 @@ def main():
     svm_classifier = SVMClassifier()
     
     # Load datasets
-    (X_linear, y_linear), (X_nonlinear, y_nonlinear) = svm_classifier.load_and_prepare_data()
+    (X_breast_cancer, y_breast_cancer), (X_breast_cancer_2d, y_breast_cancer_2d), (X_linear, y_linear), (X_nonlinear, y_nonlinear) = svm_classifier.load_and_prepare_data()
     
-    print("\n1. Working with Linear Dataset")
-    print("-" * 30)
+    print("\n1. Working with Breast Cancer Dataset (Real-world Data)")
+    print("-" * 55)
+    
+    # Train models on breast cancer dataset (full features)
+    X_train_bc, X_test_bc, y_train_bc, y_test_bc = svm_classifier.train_svm_models(X_breast_cancer, y_breast_cancer)
+    
+    # Evaluate models on breast cancer dataset
+    svm_classifier.evaluate_models(X_train_bc, X_test_bc, y_train_bc, y_test_bc)
+    
+    # Cross-validation on breast cancer dataset
+    svm_classifier.perform_cross_validation(X_breast_cancer, y_breast_cancer)
+    
+    print("\n2. Breast Cancer Dataset - 2D Visualization")
+    print("-" * 45)
+    
+    # Reset scaler for 2D breast cancer dataset
+    svm_classifier.scaler = StandardScaler()
+    
+    # Visualize decision boundaries for breast cancer dataset (2D)
+    svm_classifier.visualize_decision_boundary(X_breast_cancer_2d, y_breast_cancer_2d, "(Breast Cancer - 2D)")
+    
+    print("\n3. Working with Synthetic Linear Dataset")
+    print("-" * 42)
+    
+    # Reset scaler for linear dataset
+    svm_classifier.scaler = StandardScaler()
     
     # Train models on linear dataset
     X_train_linear, X_test_linear, y_train_linear, y_test_linear = svm_classifier.train_svm_models(X_linear, y_linear)
@@ -247,12 +286,9 @@ def main():
     svm_classifier.evaluate_models(X_train_linear, X_test_linear, y_train_linear, y_test_linear)
     
     # Visualize decision boundaries for linear dataset
-    svm_classifier.visualize_decision_boundary(X_linear, y_linear, "(Linear Dataset)")
+    svm_classifier.visualize_decision_boundary(X_linear, y_linear, "(Synthetic Linear)")
     
-    # Cross-validation on linear dataset
-    svm_classifier.perform_cross_validation(X_linear, y_linear)
-    
-    print("\n2. Working with Non-linear Dataset")
+    print("\n4. Working with Non-linear Dataset")
     print("-" * 35)
     
     # Reset scaler for non-linear dataset
@@ -265,19 +301,20 @@ def main():
     svm_classifier.evaluate_models(X_train_nonlinear, X_test_nonlinear, y_train_nonlinear, y_test_nonlinear)
     
     # Visualize decision boundaries for non-linear dataset
-    svm_classifier.visualize_decision_boundary(X_nonlinear, y_nonlinear, "(Non-linear Dataset)")
+    svm_classifier.visualize_decision_boundary(X_nonlinear, y_nonlinear, "(Non-linear Circles)")
     
-    # Cross-validation on non-linear dataset
-    svm_classifier.perform_cross_validation(X_nonlinear, y_nonlinear)
+    print("\n5. Hyperparameter Tuning on Breast Cancer Dataset")
+    print("-" * 52)
     
-    print("\n3. Hyperparameter Tuning")
-    print("-" * 25)
+    # Reset scaler for hyperparameter tuning
+    svm_classifier.scaler = StandardScaler()
     
-    # Tune hyperparameters on non-linear dataset
-    best_params, best_score = svm_classifier.tune_hyperparameters(X_nonlinear, y_nonlinear)
+    # Tune hyperparameters on breast cancer dataset
+    best_params, best_score = svm_classifier.tune_hyperparameters(X_breast_cancer, y_breast_cancer)
     
     print("\nTask completed successfully!")
     print("Check the generated plots for decision boundaries and performance metrics.")
+    print("The breast cancer dataset provides real-world medical data for classification.")
 
 if __name__ == "__main__":
     main()

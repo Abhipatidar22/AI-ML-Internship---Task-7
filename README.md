@@ -53,6 +53,18 @@ python svm_classification.py
 - Cross-validation results
 - Hyperparameter tuning results with heatmap visualization
 
-## Dataset
+## Datasets
 
-The project uses synthetic binary classification datasets generated using scikit-learn's make_classification and make_circles functions, which create linearly separable and non-linearly separable data points for demonstration purposes.
+The project uses multiple datasets for comprehensive SVM analysis:
+
+### 1. Breast Cancer Dataset (Primary - Real-world Data)
+- **Source**: Wisconsin Diagnostic Breast Cancer Dataset (from Kaggle/UCI)
+- **Features**: 30 real-valued features computed from digitized images of breast mass
+- **Samples**: 569 instances
+- **Classes**: Malignant (0) and Benign (1)
+- **Purpose**: Real-world medical classification problem
+
+### 2. Synthetic Datasets (For Comparison)
+- **Linear Dataset**: Generated using make_classification (linearly separable)
+- **Non-linear Dataset**: Generated using make_circles (concentric circles)
+- **Purpose**: Demonstrate SVM behavior on different data patterns
